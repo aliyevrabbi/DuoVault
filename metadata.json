@@ -1,0 +1,6 @@
+{
+  "name": "DuoVault",
+  "description": "Minimalist iOS-style 3D leather wallet & live shared savings tracker for two friends until May 2028.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

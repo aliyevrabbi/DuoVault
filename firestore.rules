@@ -1,0 +1,155 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 0. Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Hardened Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 2. Entity Validation Helpers
+    function isValidVault(data) {
+      return data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 2 &&
+             data.memberUids[0] is string && data.memberUids[0].size() >= 1 && data.memberUids[0].size() <= 128 &&
+             (data.memberUids.size() == 1 || (data.memberUids[1] is string && data.memberUids[1].size() >= 1 && data.memberUids[1].size() <= 128)) &&
+             data.inviteCode is string && data.inviteCode.size() >= 4 && data.inviteCode.size() <= 32 && data.inviteCode.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 60 &&
+             data.currency is string && data.currency.size() >= 1 && data.currency.size() <= 5 &&
+             data.leatherTheme is string && (data.leatherTheme == 'black' || data.leatherTheme == 'brown') &&
+             (data.targetAmount is int || data.targetAmount is float) && data.targetAmount > 0 && data.targetAmount <= 100000000 &&
+             (data.dailyTarget is int || data.dailyTarget is float) && data.dailyTarget > 0 && data.dailyTarget <= 10000000 &&
+             (data.totalSaved is int || data.totalSaved is float) && data.totalSaved >= 0 && data.totalSaved <= 100000000 &&
+             (data.ownerSaved is int || data.ownerSaved is float) && data.ownerSaved >= 0 && data.ownerSaved <= 100000000 &&
+             (data.partnerSaved is int || data.partnerSaved is float) && data.partnerSaved >= 0 && data.partnerSaved <= 100000000 &&
+             data.ownerName is string && data.ownerName.size() >= 1 && data.ownerName.size() <= 60 &&
+             data.partnerName is string && data.partnerName.size() <= 60 &&
+             data.partnerUid is string && data.partnerUid.size() <= 128 &&
+             data.targetDateIso is string && data.targetDateIso.size() >= 8 && data.targetDateIso.size() <= 30 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidDeposit(data) {
+      return data.vaultId is string && data.vaultId.size() >= 1 && data.vaultId.size() <= 128 && data.vaultId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 60 &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 2 &&
+             data.memberUids[0] is string && data.memberUids[0].size() >= 1 && data.memberUids[0].size() <= 128 &&
+             (data.memberUids.size() == 1 || (data.memberUids[1] is string && data.memberUids[1].size() >= 1 && data.memberUids[1].size() <= 128)) &&
+             (data.amount is int || data.amount is float) && data.amount > 0 && data.amount <= 10000000 &&
+             data.note is string && data.note.size() <= 120 &&
+             data.dayKey is string && data.dayKey.size() >= 8 && data.dayKey.size() <= 20 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 3. Vaults Collection
+    match /vaults/{vaultId} {
+      allow get: if isSignedIn() && isValidId(vaultId) && request.auth.uid in existing().memberUids;
+      allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+
+      allow create: if isSignedIn() &&
+                       isValidId(vaultId) &&
+                       incoming().keys().hasAll([
+                         'ownerId', 'memberUids', 'inviteCode', 'title', 'currency',
+                         'leatherTheme', 'targetAmount', 'dailyTarget', 'totalSaved',
+                         'ownerSaved', 'partnerSaved', 'ownerName', 'partnerName',
+                         'partnerUid', 'targetDateIso', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'ownerId', 'memberUids', 'inviteCode', 'title', 'currency',
+                         'leatherTheme', 'targetAmount', 'dailyTarget', 'totalSaved',
+                         'ownerSaved', 'partnerSaved', 'ownerName', 'partnerName',
+                         'partnerUid', 'targetDateIso', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().ownerId == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids &&
+                       isValidVault(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(vaultId) &&
+                       isValidVault(incoming()) &&
+                       incoming().ownerId == existing().ownerId &&
+                       incoming().inviteCode == existing().inviteCode &&
+                       incoming().createdAt == existing().createdAt && (
+                         // Action 1: Existing member updates savings totals, settings, or partner info
+                         (
+                           request.auth.uid in existing().memberUids &&
+                           request.auth.uid in incoming().memberUids &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'title', 'currency', 'leatherTheme', 'targetAmount',
+                             'dailyTarget', 'totalSaved', 'ownerSaved', 'partnerSaved',
+                             'ownerName', 'partnerName', 'partnerUid', 'memberUids',
+                             'targetDateIso', 'updatedAt'
+                           ])
+                         ) ||
+                         // Action 2: Friend joins a 1-member vault using the vault code
+                         (
+                           existing().memberUids.size() == 1 &&
+                           !(request.auth.uid in existing().memberUids) &&
+                           incoming().memberUids.size() == 2 &&
+                           incoming().memberUids[0] == existing().ownerId &&
+                           incoming().memberUids[1] == request.auth.uid &&
+                           incoming().partnerUid == request.auth.uid &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'memberUids', 'partnerUid', 'partnerName', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isSignedIn() && isValidId(vaultId) && existing().ownerId == request.auth.uid;
+    }
+
+    // 4. Deposits Collection
+    match /deposits/{depositId} {
+      allow get: if isSignedIn() && isValidId(depositId) && request.auth.uid in existing().memberUids;
+      allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+
+      allow create: if isSignedIn() &&
+                       isValidId(depositId) &&
+                       incoming().keys().hasAll([
+                         'vaultId', 'userId', 'userName', 'memberUids',
+                         'amount', 'note', 'dayKey', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'vaultId', 'userId', 'userName', 'memberUids',
+                         'amount', 'note', 'dayKey', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().userId == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids &&
+                       isValidDeposit(incoming()) &&
+                       exists(/databases/$(database)/documents/vaults/$(incoming().vaultId)) &&
+                       request.auth.uid in get(/databases/$(database)/documents/vaults/$(incoming().vaultId)).data.memberUids;
+
+      allow update: if isSignedIn() &&
+                       isValidId(depositId) &&
+                       isValidDeposit(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().vaultId == existing().vaultId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['note', 'memberUids', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(depositId) && existing().userId == request.auth.uid;
+    }
+  }
+}

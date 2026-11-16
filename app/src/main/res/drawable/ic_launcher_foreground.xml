@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Peeking Blue Savings Card -->
+    <path
+        android:fillColor="#0A84FF"
+        android:pathData="M32,30 L76,30 C79.3,30 82,32.7 82,36 L82,46 L26,46 L26,36 C26,32.7 28.7,30 32,30 Z" />
+    <!-- Leather Wallet Body -->
+    <path
+        android:fillColor="#C68B59"
+        android:pathData="M24,42 L42,42 C45,42 48,48 54,48 C60,48 63,42 66,42 L84,42 C87.3,42 90,44.7 90,48 L90,74 C90,77.3 87.3,80 84,80 L24,80 C20.7,80 18,77.3 18,74 L18,48 C18,44.7 20.7,42 24,42 Z" />
+    <!-- Clasp Dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,61 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>

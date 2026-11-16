@@ -1,0 +1,171 @@
+{
+  "entities": {
+    "Vault": {
+      "title": "Vault",
+      "description": "A shared 3D wallet savings vault for two friends targeting May 2028.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who created the shared vault."
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "Bounded array (max 2) of member UIDs authorized to view and contribute to this vault."
+        },
+        "inviteCode": {
+          "type": "string",
+          "description": "Unique invite code used by the friend to join the vault."
+        },
+        "title": {
+          "type": "string",
+          "description": "Name of the savings goal (e.g. May 2028 Ortak Hədəf)."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency symbol (₼, $, €)."
+        },
+        "leatherTheme": {
+          "type": "string",
+          "enum": ["black", "brown"],
+          "description": "3D wallet leather visual style."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "Total target savings amount by May 2028."
+        },
+        "dailyTarget": {
+          "type": "number",
+          "description": "Target combined daily savings amount."
+        },
+        "totalSaved": {
+          "type": "number",
+          "description": "Combined total saved by both friends."
+        },
+        "ownerSaved": {
+          "type": "number",
+          "description": "Total amount contributed by the vault owner."
+        },
+        "partnerSaved": {
+          "type": "number",
+          "description": "Total amount contributed by the partner friend."
+        },
+        "ownerName": {
+          "type": "string",
+          "description": "Display name of the vault owner."
+        },
+        "partnerName": {
+          "type": "string",
+          "description": "Display name of the joined partner friend."
+        },
+        "partnerUid": {
+          "type": "string",
+          "description": "UID of the joined partner friend (empty string before joining)."
+        },
+        "targetDateIso": {
+          "type": "string",
+          "description": "ISO date string for the savings target (e.g. 2028-05-31)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the vault was created via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the vault was last updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "ownerId",
+        "memberUids",
+        "inviteCode",
+        "title",
+        "currency",
+        "leatherTheme",
+        "targetAmount",
+        "dailyTarget",
+        "totalSaved",
+        "ownerSaved",
+        "partnerSaved",
+        "ownerName",
+        "partnerName",
+        "partnerUid",
+        "targetDateIso",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Deposit": {
+      "title": "Deposit",
+      "description": "An individual savings contribution added into a shared vault by either friend.",
+      "type": "object",
+      "properties": {
+        "vaultId": {
+          "type": "string",
+          "description": "ID of the parent Vault document."
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the member who made this deposit."
+        },
+        "userName": {
+          "type": "string",
+          "description": "Display name of the member who made this deposit."
+        },
+        "memberUids": {
+          "type": "array",
+          "description": "Denormalized member UIDs (max 2) for zero-latency shared list queries."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Positive deposit amount added to the wallet."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional short note or milestone label for the deposit."
+        },
+        "dayKey": {
+          "type": "string",
+          "description": "YYYY-MM-DD date key for daily progress calculation."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the deposit was recorded via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the deposit was last updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "vaultId",
+        "userId",
+        "userName",
+        "memberUids",
+        "amount",
+        "note",
+        "dayKey",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/vaults/{vaultId}": {
+      "schema": {
+        "$ref": "#/entities/Vault"
+      },
+      "description": "Shared savings vaults accessible to the two participating friends."
+    },
+    "/deposits/{depositId}": {
+      "schema": {
+        "$ref": "#/entities/Deposit"
+      },
+      "description": "Individual savings deposits linked to a shared vault."
+    }
+  }
+}

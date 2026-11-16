@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">DuoVault</string>
+    <string name="auth_subtitle">Dostunla May 2028-ə qədər ortaq 3D pulqabında canlı pul yığ</string>
+    <string name="sign_in_with_google">Google ilə Daxil Ol</string>
+    <string name="total_balance_label">Ümumi Yığım</string>
+    <string name="daily_progress_title">Günlük Yığım &amp; May 2028</string>
+    <string name="today_limits_label">Bugünkü Hədəf</string>
+    <string name="add_money_action">Pul Əlavə Et</string>
+    <string name="partner_sync_action">Dostunu Qoş</string>
+    <string name="leather_style_action">Dəri &amp; Hədəf</string>
+    <string name="deposits_history_title">Yığım Tarixçəsi</string>
+    <string name="nav_wallet">Pulqabı</string>
+    <string name="nav_may2028">May 2028</string>
+    <string name="nav_partner">Ortaq</string>
+</resources>
