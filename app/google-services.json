@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "1088344132491-u0fv03evup1al0i0on1k5ttvn5ukvnv8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.duovault.kxzqmv",
+            "certificate_hash": "e03f5be7fc729a801aae9b1d6496cdde74532697"
+          }
+        },
+        {
           "client_id": "1088344132491-gsdsv7ip7ckhmbf7ihic8r1p4r7bdrbr.apps.googleusercontent.com",
           "client_type": 3
         }
